@@ -7,7 +7,6 @@ networks:
 volumes:
   mysql-data:
 
-
 services:
   image-processor-app-v0:
     image: sridharangopal/imageprocessor.rpi:latest

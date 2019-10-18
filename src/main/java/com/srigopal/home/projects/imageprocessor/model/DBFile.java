@@ -1,8 +1,11 @@
 package com.srigopal.home.projects.imageprocessor.model;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "files")
@@ -15,6 +18,12 @@ public class DBFile {
     private String fileName;
 
     private String fileType;
+
+    @CreationTimestamp
+    private LocalDateTime createDateTime;
+
+    @UpdateTimestamp
+    private LocalDateTime updateDateTime;
 
     @Lob
     private byte[] data;
