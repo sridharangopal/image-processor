@@ -2,6 +2,7 @@ package com.srigopal.home.projects.imageprocessor.controller;
 
 import com.srigopal.home.projects.imageprocessor.model.DBFile;
 import com.srigopal.home.projects.imageprocessor.payload.UploadFileResponse;
+import com.srigopal.home.projects.imageprocessor.service.AwsS3Service;
 import com.srigopal.home.projects.imageprocessor.service.DBFileStorageService;
 import com.srigopal.home.projects.imageprocessor.service.FileStorageService;
 import org.slf4j.Logger;
@@ -30,6 +31,9 @@ public class FileController {
 
     @Autowired
     private DBFileStorageService DBFileStorageService;
+
+    @Autowired
+    private AwsS3Service awsS3Service;
 
     @PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
@@ -75,5 +79,10 @@ public class FileController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
+    }
+
+    @PostMapping("/s3/uploadFiles")
+    public void uploadFileToS3(@RequestParam("file") List<MultipartFile> files) {
+        awsS3Service.uploadMultipleFiles(files);
     }
 }
