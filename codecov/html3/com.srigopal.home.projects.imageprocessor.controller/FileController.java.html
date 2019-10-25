@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">com.srigopal.home.projects.imageprocessor.controller</a> &gt; <span class="el_source">FileController.java</span></div><h1>FileController.java</h1><pre class="source lang-java linenums">package com.srigopal.home.projects.imageprocessor.controller;
+
+import com.srigopal.home.projects.imageprocessor.model.DBFile;
+import com.srigopal.home.projects.imageprocessor.payload.UploadFileResponse;
+import com.srigopal.home.projects.imageprocessor.service.AwsS3Service;
+import com.srigopal.home.projects.imageprocessor.service.DBFileStorageService;
+import com.srigopal.home.projects.imageprocessor.service.FileStorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+<span class="fc" id="L26">public class FileController {</span>
+<span class="fc" id="L27">    private static final Logger logger = LoggerFactory.getLogger(FileController.class);</span>
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private DBFileStorageService DBFileStorageService;
+
+    @Autowired
+    private AwsS3Service awsS3Service;
+
+    @PostMapping(&quot;/uploadFile&quot;)
+    public UploadFileResponse uploadFile(@RequestParam(&quot;file&quot;) MultipartFile file) {
+<span class="fc" id="L40">        String fileName = fileStorageService.storeFile(file);</span>
+<span class="fc" id="L41">        DBFile dbFile = DBFileStorageService.storeFile(file);</span>
+
+<span class="fc" id="L43">        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()</span>
+<span class="fc" id="L44">                .path(&quot;/downloadFile/&quot;)</span>
+<span class="fc" id="L45">                .path(fileName)</span>
+<span class="fc" id="L46">                .toUriString();</span>
+
+<span class="fc" id="L48">        return new UploadFileResponse(fileName, fileDownloadUri,</span>
+<span class="fc" id="L49">                file.getContentType(), file.getSize());</span>
+    }
+
+    @PostMapping(&quot;/uploadMultipleFiles&quot;)
+    public List&lt;UploadFileResponse&gt; uploadMultipleFiles(@RequestParam(&quot;files&quot;) MultipartFile[] files) {
+<span class="nc" id="L54">        return Arrays.asList(files)</span>
+<span class="nc" id="L55">                .stream()</span>
+<span class="nc" id="L56">                .map(file -&gt; uploadFile(file))</span>
+<span class="nc" id="L57">                .collect(Collectors.toList());</span>
+    }
+
+    @GetMapping(&quot;/downloadFile/{fileName:.+}&quot;)
+    public ResponseEntity&lt;Resource&gt; downloadFile(@PathVariable String fileName, HttpServletRequest request) {
+        // Load file as Resource
+<span class="nc" id="L63">        Resource resource = fileStorageService.loadFileAsResource(fileName);</span>
+
+        // Try to determine file's content type
+<span class="nc" id="L66">        String contentType = null;</span>
+        try {
+<span class="nc" id="L68">            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());</span>
+<span class="nc" id="L69">        } catch (IOException ex) {</span>
+<span class="nc" id="L70">            logger.info(&quot;Could not determine file type.&quot;);</span>
+<span class="nc" id="L71">        }</span>
+
+        // Fallback to the default content type if type could not be determined
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if(contentType == null) {</span>
+<span class="nc" id="L75">            contentType = &quot;application/octet-stream&quot;;</span>
+        }
+
+<span class="nc" id="L78">        return ResponseEntity.ok()</span>
+<span class="nc" id="L79">                .contentType(MediaType.parseMediaType(contentType))</span>
+<span class="nc" id="L80">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + resource.getFilename() + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L81">                .body(resource);</span>
+    }
+
+    @PostMapping(&quot;/s3/uploadFiles&quot;)
+    public UploadFileResponse uploadFileToS3(@RequestParam(&quot;file&quot;) MultipartFile file) {
+<span class="fc" id="L86">        List&lt;String&gt; response = awsS3Service.uploadMultipleFiles(file);</span>
+<span class="fc" id="L87">        String fileName = response.get(0);</span>
+<span class="fc" id="L88">        String fileDownloadUri = response.get(1);</span>
+<span class="fc" id="L89">        String fileContentType = file.getContentType();</span>
+<span class="fc" id="L90">        Long fileSize = file.getSize();</span>
+
+<span class="fc" id="L92">        return new UploadFileResponse(fileName, fileDownloadUri,</span>
+<span class="fc" id="L93">                fileContentType, fileSize);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

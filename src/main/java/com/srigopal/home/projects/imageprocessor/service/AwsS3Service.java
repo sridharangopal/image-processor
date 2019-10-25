@@ -12,8 +12,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -25,34 +27,32 @@ public class AwsS3Service {
     @Autowired
     private AmazonProperties amazonProperties;
 
-    public void uploadMultipleFiles(List<MultipartFile> files) {
+    public List<String> uploadMultipleFiles(MultipartFile multipartFile) {
+
+        ArrayList<String> response = new ArrayList<String>();
 
         String bucketName = "my-first-s3-bucket-" + UUID.randomUUID();
-        String key = "MyObjectKey";
-//        amazonS3Client.setEndpoint("http://192.168.0.200:4572");
+//        String key = "MyObjectKey";
 
         if (!amazonS3Client.doesBucketExistV2(bucketName)) {
             amazonS3Client.createBucket(bucketName);
         }
 
+        String uniqueFileName = System.currentTimeMillis() + "_" + multipartFile.getOriginalFilename();
+        File file = convertMultiPartFileToFile(multipartFile);
+        uploadFileToS3bucket(uniqueFileName, file, bucketName);
 
-        if (files != null) {
-            files.forEach(multipartFile -> {
-                File file = convertMultiPartFileToFile(multipartFile);
-                String uniqueFileName = System.currentTimeMillis() + "_" + multipartFile.getOriginalFilename();
-                uploadFileToS3bucket(uniqueFileName, file, bucketName);
-            });
-        }
+        response.add(0, uniqueFileName);
+        response.add(1, amazonS3Client.getUrl(bucketName, uniqueFileName).toExternalForm());
+
+        return response;
     }
 
     private void uploadFileToS3bucket(String fileName, File file, String bucketName) {
-//        amazonS3Client.setEndpoint("http://192.168.0.200:4572");
         amazonS3Client.putObject(new PutObjectRequest(bucketName, fileName, file));
-
     }
 
     private S3Object downloadFileFromS3bucket(String fileName, String bucketName) {
-//        amazonS3Client.setEndpoint("http://192.168.0.200:4572");
         S3Object object = amazonS3Client.getObject(bucketName,  fileName);
         return object;
 

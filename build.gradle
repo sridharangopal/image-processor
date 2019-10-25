@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.1.9.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'java'
+	id 'jacoco'
 }
 
 group = 'com.srigopal.home.projects'
@@ -16,11 +17,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.1.3.RELEASE'
+	implementation 'io.springfox:springfox-swagger2:2.9.2'
+	implementation 'io.springfox:springfox-swagger-ui:2.9.2'
 	implementation 'org.springframework.boot:spring-boot-devtools'
 	implementation 'org.springframework.boot:spring-boot-configuration-processor'
 	implementation 'mysql:mysql-connector-java'
 	implementation 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.jacoco:org.jacoco.report:0.8.5'
 }
 
 jar {
@@ -29,4 +33,30 @@ jar {
 bootJar {
 	enabled = true
 	archiveName "app.jar"
+}
+
+bootRun {
+	// -javaagent:codecov/jacocoagent.jar=jmx=yes,output=tcpserver -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1199
+	jvmArgs = ["-Dcom.sun.management.jmxremote=true",
+			   "-Dcom.sun.management.jmxremote.ssl=false",
+			   "-Dcom.sun.management.jmxremote.authenticate=false",
+//			   "-Dcom.sun.management.jmxremote.port=1099",
+//			   "-Dcom.sun.management.jmxremote.rmi.port=1199",
+			   "-javaagent:codecov/jacocoagent.jar=jmx=yes,output=tcpserver"
+	]
+}
+
+jacoco {
+	toolVersion = "0.8.5"
+}
+
+task codeCoverageReport(type: JacocoReport) {
+	executionData fileTree(project.rootDir.absolutePath).include("*.exec")
+	sourceDirectories  = files(["src/main/java"])
+	classDirectories = files(["build/classes"])
+	reports {
+		xml.enabled false
+		csv.enabled false
+		html.destination file("${buildDir}/jacocoHtml")
+	}
 }

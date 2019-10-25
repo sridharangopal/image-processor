@@ -82,7 +82,18 @@ public class FileController {
     }
 
     @PostMapping("/s3/uploadFiles")
-    public void uploadFileToS3(@RequestParam("file") List<MultipartFile> files) {
-        awsS3Service.uploadMultipleFiles(files);
+    public UploadFileResponse uploadFileToS3(@RequestParam("file") MultipartFile file) {
+        List<String> response = awsS3Service.uploadMultipleFiles(file);
+        String fileName = response.get(0);
+        String fileDownloadUri = response.get(1);
+        String fileContentType = file.getContentType();
+        Long fileSize = file.getSize();
+
+        return new UploadFileResponse(fileName, fileDownloadUri,
+                fileContentType, fileSize);
+    }
+
+    @PostMapping("/s3/uploadImage")
+    public void uploadImageToS3 (){
     }
 }
