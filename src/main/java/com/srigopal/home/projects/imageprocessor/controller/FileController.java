@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,13 +19,19 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.net.URI;
 
 @RestController
 public class FileController {
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
+    private static final java.nio.file.Path BASE_DIR = Paths.get("/", "savedImages");
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -93,7 +100,26 @@ public class FileController {
                 fileContentType, fileSize);
     }
 
-    @PostMapping("/s3/uploadImage")
-    public void uploadImageToS3 (){
+    @RequestMapping(value = "/s3/uploadImage", method = RequestMethod.POST, consumes = MediaType.IMAGE_JPEG_VALUE)
+    public ResponseEntity uploadImageToS3 (InputStream imageBytes, @RequestHeader("Content-Type") String fileType, @RequestHeader("Content-Length") long fileSize) throws IOException {
+        System.out.println("FileType: " + fileType);
+        System.out.println("FileSize: " + fileSize);
+        System.out.println("ImageBytes: " + imageBytes);
+
+        // Generate a random file name based on the current time.
+        // This probably isn't 100% safe but works fine for this example.
+        String fileName = "" + System.currentTimeMillis();
+
+        if (fileType.equals("image/jpeg")) {
+            fileName += ".jpg";
+        } else {
+            fileName += ".png";
+        }
+
+        // Copy the file to its location.
+        Files.copy(imageBytes, BASE_DIR.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+        // Return a 201 Created response with the appropriate Location header.
+        return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/" + fileName)).build();
     }
 }
