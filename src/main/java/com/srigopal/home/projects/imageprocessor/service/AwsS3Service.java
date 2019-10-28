@@ -1,6 +1,7 @@
 package com.srigopal.home.projects.imageprocessor.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.srigopal.home.projects.imageprocessor.properties.AmazonProperties;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -48,8 +50,24 @@ public class AwsS3Service {
         return response;
     }
 
+    public String uploadImageToS3(InputStream imageBytes, String fileType, long fileSize, String fileName, String bucketName) {
+        if (!amazonS3Client.doesBucketExistV2(bucketName)) {
+            amazonS3Client.createBucket(bucketName);
+        }
+        uploadFileToS3bucket(fileName, imageBytes, bucketName, fileType, fileSize);
+        return amazonS3Client.getUrl(bucketName, fileName).toExternalForm();
+    }
+
     private void uploadFileToS3bucket(String fileName, File file, String bucketName) {
         amazonS3Client.putObject(new PutObjectRequest(bucketName, fileName, file));
+    }
+
+    private void uploadFileToS3bucket(String fileName, InputStream in, String bucketName, String fileType, long fileSize) {
+        ObjectMetadata objectMetadata = new ObjectMetadata();
+        objectMetadata.addUserMetadata("content-length", String.valueOf(fileSize));
+        objectMetadata.addUserMetadata("content-type", fileType);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileName, in, objectMetadata);
+        amazonS3Client.putObject(putObjectRequest);
     }
 
     private S3Object downloadFileFromS3bucket(String fileName, String bucketName) {

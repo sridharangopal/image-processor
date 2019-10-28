@@ -32,6 +32,7 @@ import java.net.URI;
 public class FileController {
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
     private static final java.nio.file.Path BASE_DIR = Paths.get("/", "savedImages");
+    private static final String imageBucketName = "image-bucket";
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -102,10 +103,6 @@ public class FileController {
 
     @RequestMapping(value = "/s3/uploadImage", method = RequestMethod.POST, consumes = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity uploadImageToS3 (InputStream imageBytes, @RequestHeader("Content-Type") String fileType, @RequestHeader("Content-Length") long fileSize) throws IOException {
-        System.out.println("FileType: " + fileType);
-        System.out.println("FileSize: " + fileSize);
-        System.out.println("ImageBytes: " + imageBytes);
-
         // Generate a random file name based on the current time.
         // This probably isn't 100% safe but works fine for this example.
         String fileName = "" + System.currentTimeMillis();
@@ -116,8 +113,11 @@ public class FileController {
             fileName += ".png";
         }
 
-        // Copy the file to its location.
-        Files.copy(imageBytes, BASE_DIR.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+        // Copy the file to its FS location.
+        //Files.copy(imageBytes, BASE_DIR.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+        // Store the image to S3
+        awsS3Service.uploadImageToS3(imageBytes, fileType, fileSize, fileName, imageBucketName);
 
         // Return a 201 Created response with the appropriate Location header.
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/" + fileName)).build();
