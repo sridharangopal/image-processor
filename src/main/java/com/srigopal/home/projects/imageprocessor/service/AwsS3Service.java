@@ -4,16 +4,14 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.IOUtils;
 import com.srigopal.home.projects.imageprocessor.properties.AmazonProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -50,7 +48,7 @@ public class AwsS3Service {
         return response;
     }
 
-    public String uploadImageToS3(InputStream imageBytes, String fileType, long fileSize, String fileName, String bucketName) {
+    public String uploadImageToS3(InputStream imageBytes, String fileType, long fileSize, String fileName, String bucketName) throws IOException {
         if (!amazonS3Client.doesBucketExistV2(bucketName)) {
             amazonS3Client.createBucket(bucketName);
         }
@@ -62,11 +60,12 @@ public class AwsS3Service {
         amazonS3Client.putObject(new PutObjectRequest(bucketName, fileName, file));
     }
 
-    private void uploadFileToS3bucket(String fileName, InputStream in, String bucketName, String fileType, long fileSize) {
+    private void uploadFileToS3bucket(String fileName, InputStream in, String bucketName, String fileType, long fileSize) throws IOException {
         ObjectMetadata objectMetadata = new ObjectMetadata();
-        objectMetadata.addUserMetadata("content-length", String.valueOf(fileSize));
-        objectMetadata.addUserMetadata("content-type", fileType);
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileName, in, objectMetadata);
+        byte[] bytes = IOUtils.toByteArray(in);
+        objectMetadata.setContentLength(bytes.length);
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileName, byteArrayInputStream, objectMetadata);
         amazonS3Client.putObject(putObjectRequest);
     }
 
