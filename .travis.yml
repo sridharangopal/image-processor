@@ -1,8 +1,14 @@
+# ----------------------------------------------------------------------------------
+# Refer to the below link for more info
+# https://github.com/Pi4J/pi4j/blob/master/.travis.yml
+# ----------------------------------------------------------------------------------
 language: java
 os:
   - linux
 jdk:
   - openjdk8
+services:
+  - docker
 # ----------------------------------------------------------------------------------
 # Before gradle build, we need to setup cross-compiler environment for native
 # gcc/make builds for ARM platform.  First we will download the cross-compiler
@@ -24,3 +30,8 @@ install:
 
 script:
   - ./gradlew clean build -x test
+
+after_script:
+  - docker build . -t sridharangopal/imageprocessor.rpi:latest
+  - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+  - docker push sridharangopal/imageprocessor.rpi:latest
