@@ -33,4 +33,5 @@ out/
 uploads
 codecov
 bin
+.env
 
