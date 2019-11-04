@@ -5,9 +5,13 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.util.IOUtils;
+import com.srigopal.home.projects.imageprocessor.controller.FileController;
 import com.srigopal.home.projects.imageprocessor.properties.AmazonProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,17 +25,21 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class AwsS3Service {
 
+    private static final Logger logger = LoggerFactory.getLogger(AwsS3Service.class);
     @Autowired
     private AmazonS3 amazonS3Client;
 
     @Autowired
     private AmazonProperties amazonProperties;
 
+    @Value("${app.awsServices.bucketName}")
+    private String bucketName;
+
     public List<String> uploadMultipleFiles(MultipartFile multipartFile) {
 
         ArrayList<String> response = new ArrayList<String>();
 
-        String bucketName = "my-first-s3-bucket-" + UUID.randomUUID();
+//        String bucketName = "my-first-s3-bucket-" + UUID.randomUUID();
 //        String key = "MyObjectKey";
 
         if (!amazonS3Client.doesBucketExistV2(bucketName)) {
@@ -81,7 +89,7 @@ public class AwsS3Service {
             fos.write(file.getBytes());
         } catch (IOException e) {
             //log.error("Error converting multipartFile to file", e);
-            System.err.print("Error converting multipartFile to file : " + e.getMessage());
+            logger.error("Error converting multipartFile to file : " + e.getMessage());
         }
         return convertedFile;
     }

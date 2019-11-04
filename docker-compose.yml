@@ -4,8 +4,8 @@ networks:
   ls_ls-net:
     driver: overlay
     external: true
-  image-processor-net:
-    driver: overlay
+#  image-processor-net:
+#    driver: overlay
 
 volumes:
   mysql-data:
@@ -15,7 +15,7 @@ services:
 #    image: sridharangopal/imageprocessor.rpi:latest
     image: ${APP_IMAGE}
     networks:
-      - image-processor-net
+#      - image-processor-net
       - ls_ls-net
     depends_on:
       - image-processor-db
@@ -48,21 +48,21 @@ services:
     ports:
       - '3306:3306'
     networks:
-      - image-processor-net
+#      - image-processor-net
+      - ls_ls-net
     volumes:
       - mysql-data:/var/lib/mysql
 
-  debug-container:
-    image: aws-debug-container:latest
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-    networks:
-      - image-processor-net
-      - ls_ls-net
-    environment:
-      AWS_ACCESS_KEY_ID: 'foo'
-      AWS_SECRET_ACCESS_KEY: 'bar'
-#    entrypoint: /bin/sh
-    command: aws --endpoint=http://s3:4572 s3 mb s3://test-bucket
+#  debug-container:
+#    image: mikesir87/aws-cli:latest
+#    deploy:
+#      placement:
+#        constraints:
+#          - node.role == manager
+#    networks:
+#      - image-processor-net
+#      - ls_ls-net
+#    environment:
+#      AWS_ACCESS_KEY_ID: 'foo'
+#      AWS_SECRET_ACCESS_KEY: 'bar'
+#    command: aws --endpoint=http://s3:4572 s3 mb s3://test-bucket

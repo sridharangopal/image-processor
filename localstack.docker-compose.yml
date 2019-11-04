@@ -7,31 +7,46 @@ networks:
 
 services:
   s3:
-    image: localstack/localstack
+    image: sridharangopal/localstack-rpi:latest
     ports:
       - "4572:4572"
     environment:
       - SERVICES=s3
       - START_WEB=0
-    networks:
+    networks: 
       - ls-net
-
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+         - node.role != manager
+  
   sns:
-    image: localstack/localstack
+    image: sridharangopal/localstack-rpi:latest
     ports:
       - "4575:4575"
     environment:
       - SERVICES=sns
       - START_WEB=0
-    networks:
+    networks: 
       - ls-net
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+         - node.role != manager
 
   sqs:
-    image: localstack/localstack
+    image: sridharangopal/localstack-rpi:latest
     ports:
       - "4576:4576"
     environment:
       - SERVICES=sqs
       - START_WEB=0
-    networks:
+    networks: 
       - ls-net
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+         - node.role != manager

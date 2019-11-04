@@ -1,5 +1,7 @@
 package com.srigopal.home.projects.imageprocessor.config;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +24,9 @@ public class AmazonConfig {
 
         return AmazonS3ClientBuilder
                 .standard()
+                .withPathStyleAccessEnabled(true)
                 .withEndpointConfiguration(endpointConfiguration)
+                .withClientConfiguration(new ClientConfiguration().withProtocol(Protocol.HTTP))
                 .withCredentials(credentialsProvider)
                 .build();
     }
