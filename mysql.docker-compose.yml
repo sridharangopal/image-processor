@@ -1,0 +1,30 @@
+version: '3.7'
+
+networks:
+  ls_ls-net:
+    driver: overlay
+    external: true
+
+volumes:
+  mysql-data:
+
+services:
+  image-processor-db:
+    #    image: hypriot/rpi-mysql
+    image: ${DB_IMAGE}
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    environment:
+      MYSQL_DATABASE: 'imagerepo'
+      TZ: 'America/New_York'
+      MYSQL_USER: 'mysql'
+      MYSQL_PASSWORD: 'SuperS3cretPassword'
+      MYSQL_ROOT_PASSWORD: 'SuperS3cretPassword'
+    ports:
+      - '3306:3306'
+    networks:
+      - ls_ls-net
+    volumes:
+      - mysql-data:/var/lib/mysql

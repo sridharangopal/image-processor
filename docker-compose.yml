@@ -7,8 +7,8 @@ networks:
 #  image-processor-net:
 #    driver: overlay
 
-volumes:
-  mysql-data:
+#volumes:
+#  mysql-data:
 
 services:
   image-processor-app-v0:
@@ -32,26 +32,26 @@ services:
         max_attempts: 5
         window: 0s
 
-  image-processor-db:
-#    image: hypriot/rpi-mysql
-    image: ${DB_IMAGE}
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-    environment:
-      MYSQL_DATABASE: 'imagerepo'
-      TZ: 'America/New_York'
-      MYSQL_USER: 'mysql'
-      MYSQL_PASSWORD: 'SuperS3cretPassword'
-      MYSQL_ROOT_PASSWORD: 'SuperS3cretPassword'
-    ports:
-      - '3306:3306'
-    networks:
-#      - image-processor-net
-      - ls_ls-net
-    volumes:
-      - mysql-data:/var/lib/mysql
+#  image-processor-db:
+##    image: hypriot/rpi-mysql
+#    image: ${DB_IMAGE}
+#    deploy:
+#      placement:
+#        constraints:
+#          - node.role == manager
+#    environment:
+#      MYSQL_DATABASE: 'imagerepo'
+#      TZ: 'America/New_York'
+#      MYSQL_USER: 'mysql'
+#      MYSQL_PASSWORD: 'SuperS3cretPassword'
+#      MYSQL_ROOT_PASSWORD: 'SuperS3cretPassword'
+#    ports:
+#      - '3306:3306'
+#    networks:
+##      - image-processor-net
+#      - ls_ls-net
+#    volumes:
+#      - mysql-data:/var/lib/mysql
 
 #  debug-container:
 #    image: mikesir87/aws-cli:latest

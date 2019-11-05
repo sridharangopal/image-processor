@@ -42,7 +42,7 @@ bootRun {
 			   "-Dcom.sun.management.jmxremote.authenticate=false",
 //			   "-Dcom.sun.management.jmxremote.port=1099",
 //			   "-Dcom.sun.management.jmxremote.rmi.port=1199",
-			   "-javaagent:codecov/jacocoagent.jar=jmx=yes,output=tcpserver"
+//			   "-javaagent:codecov/jacocoagent.jar=jmx=yes,output=tcpserver"
 	]
 }
 
